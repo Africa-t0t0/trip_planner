@@ -1,65 +1,204 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import dynamic from "next/dynamic";
+import Navbar from "@/components/Navbar";
+import PlaceList from "@/components/PlaceList";
+import Itinerary from "@/components/Itinerary";
+import PlansManager from "@/components/PlansManager";
+import DatabaseStatus from "@/components/DatabaseStatus";
+import { PLACES, Place } from "@/data/places";
+import { Plan } from "@/types";
+import { Calendar, List, FolderPlus } from "lucide-react";
+
+// Dynamically import Map to prevent SSR issues with Leaflet
+const Map = dynamic(() => import("@/components/Map"), {
+    ssr: false,
+    loading: () => (
+        <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-500">
+            Cargando mapa...
+        </div>
+    ),
+});
 
 export default function Home() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
+    const [itinerary, setItinerary] = useState<Record<number, Place[]>>({});
+    const [plans, setPlans] = useState<Plan[]>([]);
+    const [dayPlans, setDayPlans] = useState<Record<number, string[]>>({});
+    const [activeTab, setActiveTab] = useState<"places" | "plans" | "itinerary">("places");
+
+    const handleSelectPlace = (placeId: string) => {
+        setSelectedPlaceId(placeId);
+    };
+
+    const handleAddToDay = (place: Place, day: number) => {
+        setItinerary((prev) => {
+            const currentDayPlaces = prev[day] || [];
+            if (currentDayPlaces.find((p) => p.id === place.id)) {
+                return prev;
+            }
+            return {
+                ...prev,
+                [day]: [...currentDayPlaces, place],
+            };
+        });
+    };
+
+    const handleRemoveFromDay = (placeId: string, day: number) => {
+        setItinerary((prev) => {
+            const currentDayPlaces = prev[day] || [];
+            return {
+                ...prev,
+                [day]: currentDayPlaces.filter((p) => p.id !== placeId),
+            };
+        });
+    };
+
+    const handleCreatePlan = (planData: Omit<Plan, "id">) => {
+        const newPlan: Plan = {
+            ...planData,
+            id: `plan-${Date.now()}`,
+        };
+        setPlans((prev) => [...prev, newPlan]);
+    };
+
+    const handleDeletePlan = (planId: string) => {
+        setPlans((prev) => prev.filter((p) => p.id !== planId));
+        // Also remove from all days
+        setDayPlans((prev) => {
+            const newDayPlans = { ...prev };
+            Object.keys(newDayPlans).forEach((day) => {
+                newDayPlans[Number(day)] = newDayPlans[Number(day)].filter((id) => id !== planId);
+            });
+            return newDayPlans;
+        });
+    };
+
+    const handleAddPlanToDay = (planId: string, day: number) => {
+        setDayPlans((prev) => {
+            const currentDayPlans = prev[day] || [];
+            if (currentDayPlans.includes(planId)) {
+                return prev;
+            }
+            return {
+                ...prev,
+                [day]: [...currentDayPlans, planId],
+            };
+        });
+    };
+
+    const handleRemovePlanFromDay = (planId: string, day: number) => {
+        setDayPlans((prev) => {
+            const currentDayPlans = prev[day] || [];
+            return {
+                ...prev,
+                [day]: currentDayPlans.filter((id) => id !== planId),
+            };
+        });
+    };
+
+    const handleAddToPlan = (placeId: string, planId: string) => {
+        setPlans((prev) =>
+            prev.map((plan) =>
+                plan.id === planId
+                    ? { ...plan, placeIds: [...plan.placeIds, placeId] }
+                    : plan
+            )
+        );
+    };
+
+
+    return (
+        <div className="flex flex-col h-screen overflow-hidden bg-white">
+            {/* Top Navbar */}
+            <Navbar />
+
+            {/* Main Content Area */}
+            <main className="flex-1 flex flex-col md:flex-row overflow-hidden">
+                {/* Sidebar Panel */}
+                <div className="w-full md:w-2/5 lg:w-1/2 flex flex-col border-r border-gray-200 bg-white h-1/2 md:h-full z-10 shadow-lg relative">
+
+                    {/* Tabs */}
+                    <div className="flex border-b border-gray-200 bg-gray-50">
+                        <button
+                            className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${activeTab === "places"
+                                ? "text-red-600 border-b-2 border-red-600 bg-white"
+                                : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                                }`}
+                            onClick={() => setActiveTab("places")}
+                        >
+                            <List size={18} />
+                            Lugares
+                        </button>
+                        <button
+                            className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${activeTab === "plans"
+                                ? "text-red-600 border-b-2 border-red-600 bg-white"
+                                : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                                }`}
+                            onClick={() => setActiveTab("plans")}
+                        >
+                            <FolderPlus size={18} />
+                            Planes
+                        </button>
+                        <button
+                            className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${activeTab === "itinerary"
+                                ? "text-red-600 border-b-2 border-red-600 bg-white"
+                                : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                                }`}
+                            onClick={() => setActiveTab("itinerary")}
+                        >
+                            <Calendar size={18} />
+                            Mi Ruta
+                        </button>
+                    </div>
+
+                    {/* Scrollable Content */}
+                    <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-slate-50">
+                        {activeTab === "places" ? (
+                            <PlaceList
+                                places={PLACES}
+                                plans={plans}
+                                onSelectPlace={handleSelectPlace}
+                                onAddToDay={handleAddToDay}
+                                onAddToPlan={handleAddToPlan}
+                                selectedPlaceId={selectedPlaceId}
+                            />
+                        ) : activeTab === "plans" ? (
+                            <PlansManager
+                                plans={plans}
+                                places={PLACES}
+                                onCreatePlan={handleCreatePlan}
+                                onDeletePlan={handleDeletePlan}
+                                onAddPlanToDay={handleAddPlanToDay}
+                            />
+                        ) : (
+                            <Itinerary
+                                itinerary={itinerary}
+                                dayPlans={dayPlans}
+                                plans={plans}
+                                places={PLACES}
+                                onRemoveFromDay={handleRemoveFromDay}
+                                onRemovePlanFromDay={handleRemovePlanFromDay}
+                                onSelectPlace={handleSelectPlace}
+                            />
+                        )}
+                    </div>
+                </div>
+
+                {/* Map Panel */}
+                <div className="flex-1 h-1/2 md:h-full relative">
+                    <Map
+                        places={PLACES}
+                        selectedPlaceId={selectedPlaceId}
+                        onSelectPlace={handleSelectPlace}
+                    />
+                </div>
+            </main>
+
+            {/* Database Connection Status */}
+            <DatabaseStatus />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+    );
 }
+
