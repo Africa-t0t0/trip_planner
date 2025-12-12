@@ -10,17 +10,15 @@
     "migrate:places": "tsx scripts/migrate-places.ts"
   },
   "dependencies": {
-    "leaflet": "^1.9.4",
+    "@vis.gl/react-google-maps": "^1.7.1",
     "lucide-react": "^0.559.0",
     "mongodb": "4.0",
     "next": "16.0.8",
     "react": "19.2.1",
-    "react-dom": "19.2.1",
-    "react-leaflet": "^5.0.0"
+    "react-dom": "19.2.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/leaflet": "^1.9.21",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

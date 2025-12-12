@@ -1,20 +1,8 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
-import { Place } from "@/data/places";
-import { Icon } from "leaflet";
-import { useEffect } from "react";
-
-// Fix for default marker icon in Next.js
-const customIcon = new Icon({
-    iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
-    iconRetinaUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
-    shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41],
-});
+import { Map as GoogleMap, AdvancedMarker, InfoWindow, useMap } from '@vis.gl/react-google-maps';
+import { Place } from '@/app/models/places';
+import { useState, useEffect } from 'react';
 
 interface MapProps {
     places: Place[];
@@ -22,49 +10,76 @@ interface MapProps {
     onSelectPlace: (placeId: string) => void;
 }
 
-function MapUpdater({ center }: { center: [number, number] }) {
-    const map = useMap();
-    useEffect(() => {
-        map.flyTo(center, 14);
-    }, [center, map]);
-    return null;
-}
-
 export default function Map({ places, selectedPlaceId, onSelectPlace }: MapProps) {
+    const [openInfoWindowId, setOpenInfoWindowId] = useState<string | null>(null);
+    const map = useMap();
+
+    // Find the selected place
     const selectedPlace = places.find((p) => p.id === selectedPlaceId);
-    const center: [number, number] = selectedPlace
-        ? [selectedPlace.coordenadas.latitud, selectedPlace.coordenadas.longitud]
-        : [-33.4489, -70.6693]; // Santiago default center
+    const center = selectedPlace
+        ? { lat: selectedPlace.coordenadas.latitud, lng: selectedPlace.coordenadas.longitud }
+        : { lat: -33.4489, lng: -70.6693 }; // Santiago default center
+
+    // Pan to selected place when it changes
+    useEffect(() => {
+        if (map && selectedPlace) {
+            map.panTo({
+                lat: selectedPlace.coordenadas.latitud,
+                lng: selectedPlace.coordenadas.longitud
+            });
+            map.setZoom(14);
+            setOpenInfoWindowId(selectedPlace.id);
+        }
+    }, [selectedPlaceId, selectedPlace, map]);
+
+    const handleMarkerClick = (placeId: string) => {
+        onSelectPlace(placeId);
+        setOpenInfoWindowId(placeId);
+    };
 
     return (
-        <MapContainer
-            center={center}
-            zoom={12}
-            scrollWheelZoom={true}
-            className="w-full h-full z-0"
+        <GoogleMap
+            defaultCenter={center}
+            defaultZoom={12}
+            mapId="santiago-roadmap" // Required for AdvancedMarker
+            gestureHandling="greedy"
+            disableDefaultUI={false}
+            className="w-full h-full"
         >
-            <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
             {places.map((place) => (
-                <Marker
+                <AdvancedMarker
                     key={place.id}
-                    position={[place.coordenadas.latitud, place.coordenadas.longitud]}
-                    icon={customIcon}
-                    eventHandlers={{
-                        click: () => onSelectPlace(place.id),
+                    position={{
+                        lat: place.coordenadas.latitud,
+                        lng: place.coordenadas.longitud
                     }}
+                    onClick={() => handleMarkerClick(place.id)}
                 >
-                    <Popup>
-                        <div className="font-sans">
-                            <h3 className="font-bold text-lg">{place.nombre}</h3>
-                            <p className="text-sm">{place.descripcion}</p>
+                    {/* Custom marker pin */}
+                    <div className="relative">
+                        <div className="w-8 h-8 bg-red-600 rounded-full border-4 border-white shadow-lg flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
+                            <div className="w-3 h-3 bg-white rounded-full"></div>
                         </div>
-                    </Popup>
-                </Marker>
+                    </div>
+
+                    {/* Info Window */}
+                    {openInfoWindowId === place.id && (
+                        <InfoWindow
+                            position={{
+                                lat: place.coordenadas.latitud,
+                                lng: place.coordenadas.longitud
+                            }}
+                            onCloseClick={() => setOpenInfoWindowId(null)}
+                            pixelOffset={[0, -50]} // Move up 50px to show above marker
+                        >
+                            <div className="p-2 max-w-xs">
+                                <h3 className="font-bold text-lg mb-1">{place.nombre}</h3>
+                                <p className="text-sm text-gray-700">{place.descripcion}</p>
+                            </div>
+                        </InfoWindow>
+                    )}
+                </AdvancedMarker>
             ))}
-            <MapUpdater center={center} />
-        </MapContainer>
+        </GoogleMap>
     );
 }
