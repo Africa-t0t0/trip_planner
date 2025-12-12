@@ -10,14 +10,14 @@ export default function Navbar() {
                 </div>
                 <div className="flex flex-col">
                     <h1 className="text-xl md:text-2xl font-bold tracking-tight leading-tight">
-                        Santiago Trip
+                        Domi Trip 3.0
                     </h1>
                     <p className="text-xs text-red-100 hidden md:block">
-                        Tu guía turística personal
+                        Trips for you cutie {"<3"}
                     </p>
                 </div>
             </div>
-            
+
             {/* Mobile indicator */}
             <div className="ml-auto md:hidden">
                 <Compass size={20} className="text-red-200" />

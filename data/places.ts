@@ -115,7 +115,7 @@ export const PLACES: Place[] = [
         estacionamiento: "Sí, gratuito (bordea el parque)",
         descripcion: "Uno de los parques más modernos de Santiago. Tiene lagunas con flamencos, peces koi, cisnes de cuello negro y amplias áreas verdes impecables.",
         tips: "Compren un helado o café en el restaurant 'Mestizo' y caminen por el borde de la laguna.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Parque_Bicentenario_de_Vitacura.jpg/1280px-Parque_Bicentenario_de_Vitacura.jpg"
+        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/5/55/Parque_Bicentenario%2C_Vitacura%2C_Santiago_20200314_02.jpg"
     },
     {
         id: "9",
@@ -142,5 +142,58 @@ export const PLACES: Place[] = [
         descripcion: "Una de las viñas más famosas del mundo. El tour incluye paseo por los jardines de la casona de verano, viñedos y la famosa bodega del 'Casillero del Diablo'.",
         tips: "Reserva el tour con anticipación en su web.",
         imageUrl: "https://www.laguiadesantiago.com/wp-content/uploads/2022/06/vinoteca-santiago-chile.jpg"
+    },
+    {
+        id: "11",
+        nombre: "Escapology",
+        coordenadas: {
+            latitud: -33.4034,
+            longitud: -70.5752
+
+        },
+        comunas: ["Vitacura"],
+        estacionamiento: "No propio del mall",
+        descripcion: "Escape room en el mall Parque Arauco, tiene distintas salas con distintos desafíos.",
+        tips: "Reserva con anticipación en su web.",
+        imageUrl: "https://www.escapology.com/_next/image?url=https%3A%2F%2Fassets01.escapdev.com%2Fuploads%2FEscape_Rooms_Chile_88dbf1957b.png&w=1920&q=75"
+    },
+    {
+        id: "12",
+        nombre: "Museo Interactivo Mirador",
+        coordenadas: {
+            latitud: -33.51933018940871,
+            longitud: -70.61204874555247
+        },
+        comunas: ["La Granja"],
+        estacionamiento: "No propio del mall",
+        descripcion: "Museo interactivo con juegos y actividades para niños y adultos.",
+        tips: "Estacionamiento gratuito.",
+        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/c/c1/Museo_Interactivo_Mirador-01.jpg"
+    },
+    {
+        id: "13",
+        nombre: "Museo Nacional de Bellas Artes",
+        coordenadas: {
+            latitud: -33.43316145343827,
+            longitud: -70.64366333119638
+        },
+        comunas: ["Santiago"],
+        estacionamiento: "No propio del mall",
+        descripcion: "Museo con colección de arte chileno y latinoamericano.",
+        tips: "Casilleros requieren moneda de 100 pesos chilenos.",
+        imageUrl: "https://ohstgo.cl/wp-content/uploads/2023/07/SANTIAGO_MNBA_AUTOR-Marcos-Mendizabal_1-1035x690-1-1035x687.jpg"
+    },
+    {
+        id: "14",
+        nombre: "Centro Cultural Palacio de la Moneda",
+        coordenadas: {
+            latitud: -33.4436245069601,
+            longitud: -70.65375546243659
+        },
+        comunas: ["Santiago"],
+        estacionamiento: "No propio del mall",
+        descripcion: "Centro cultural con exposiciones temporales y permanentes.",
+        tips: "",
+        imageUrl: "https://storage.googleapis.com/cclm-prod/web/wp-content/uploads/2020/05/hall-cclm_-2100x900.jpg"
     }
 ];

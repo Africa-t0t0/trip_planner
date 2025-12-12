@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Navbar from "@/components/Navbar";
 import PlaceList from "@/components/PlaceList";
 import Itinerary from "@/components/Itinerary";
 import PlansManager from "@/components/PlansManager";
 import DatabaseStatus from "@/components/DatabaseStatus";
-import { PLACES, Place } from "@/data/places";
+import { Place } from "@/app/models/places";
 import { Plan } from "@/types";
 import { Calendar, List, FolderPlus } from "lucide-react";
 
@@ -22,11 +22,32 @@ const Map = dynamic(() => import("@/components/Map"), {
 });
 
 export default function Home() {
+    const [places, setPlaces] = useState<Place[]>([]);
+    const [loading, setLoading] = useState(true);
     const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
     const [itinerary, setItinerary] = useState<Record<number, Place[]>>({});
     const [plans, setPlans] = useState<Plan[]>([]);
     const [dayPlans, setDayPlans] = useState<Record<number, string[]>>({});
     const [activeTab, setActiveTab] = useState<"places" | "plans" | "itinerary">("places");
+
+    // Fetch places from MongoDB API
+    useEffect(() => {
+        async function fetchPlaces() {
+            try {
+                const response = await fetch('/api/places');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch places');
+                }
+                const data = await response.json();
+                setPlaces(data);
+            } catch (error) {
+                console.error('Error fetching places:', error);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchPlaces();
+    }, []);
 
     const handleSelectPlace = (placeId: string) => {
         setSelectedPlaceId(placeId);
@@ -155,9 +176,13 @@ export default function Home() {
 
                     {/* Scrollable Content */}
                     <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-slate-50">
-                        {activeTab === "places" ? (
+                        {loading ? (
+                            <div className="flex items-center justify-center h-64 text-gray-500">
+                                Cargando lugares...
+                            </div>
+                        ) : activeTab === "places" ? (
                             <PlaceList
-                                places={PLACES}
+                                places={places}
                                 plans={plans}
                                 onSelectPlace={handleSelectPlace}
                                 onAddToDay={handleAddToDay}
@@ -167,7 +192,7 @@ export default function Home() {
                         ) : activeTab === "plans" ? (
                             <PlansManager
                                 plans={plans}
-                                places={PLACES}
+                                places={places}
                                 onCreatePlan={handleCreatePlan}
                                 onDeletePlan={handleDeletePlan}
                                 onAddPlanToDay={handleAddPlanToDay}
@@ -177,7 +202,7 @@ export default function Home() {
                                 itinerary={itinerary}
                                 dayPlans={dayPlans}
                                 plans={plans}
-                                places={PLACES}
+                                places={places}
                                 onRemoveFromDay={handleRemoveFromDay}
                                 onRemovePlanFromDay={handleRemovePlanFromDay}
                                 onSelectPlace={handleSelectPlace}
@@ -189,7 +214,7 @@ export default function Home() {
                 {/* Map Panel */}
                 <div className="flex-1 h-1/2 md:h-full relative">
                     <Map
-                        places={PLACES}
+                        places={places}
                         selectedPlaceId={selectedPlaceId}
                         onSelectPlace={handleSelectPlace}
                     />
