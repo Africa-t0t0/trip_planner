@@ -63,8 +63,8 @@ export default function Itinerary({
                         onClick={handleSaveClick}
                         disabled={isSaving}
                         className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${isSaving
-                                ? "bg-green-100 text-green-700"
-                                : "bg-red-600 text-white hover:bg-red-700 shadow-sm"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-red-600 text-white hover:bg-red-700 shadow-sm"
                             }`}
                     >
                         <Save size={16} />
