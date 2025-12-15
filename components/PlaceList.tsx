@@ -22,7 +22,12 @@ export default function PlaceList({
 }: PlaceListProps) {
     const [hoveredPlaceId, setHoveredPlaceId] = useState<string | null>(null);
     const [dropdownOpenPlaceId, setDropdownOpenPlaceId] = useState<string | null>(null);
+    const [searchTerm, setSearchTerm] = useState("");
 
+    const filteredPlaces = places.filter(place =>
+        place.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        place.comunas.some(c => c.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
 
     return (
         <div className="space-y-6 p-2">
@@ -40,8 +45,19 @@ export default function PlaceList({
                 </div>
             </div>
 
+            {/* Search Bar */}
+            <div className="relative mb-6">
+                <input
+                    type="text"
+                    placeholder="Buscar por nombre o comuna..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                />
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {places.map((place) => (
+                {filteredPlaces.map((place) => (
                     <div
                         key={place.id}
                         className={`
@@ -135,8 +151,8 @@ export default function PlaceList({
                                                             <button
                                                                 key={plan.id}
                                                                 className={`w-full text-left px-4 py-2 text-sm transition-colors flex items-center justify-between group/plan ${alreadyInPlan
-                                                                        ? "bg-green-50 text-green-700 cursor-not-allowed"
-                                                                        : "hover:bg-green-50 text-gray-700 hover:text-green-600"
+                                                                    ? "bg-green-50 text-green-700 cursor-not-allowed"
+                                                                    : "hover:bg-green-50 text-gray-700 hover:text-green-600"
                                                                     }`}
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
