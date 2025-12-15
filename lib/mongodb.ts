@@ -12,7 +12,9 @@ const DB_USERNAME = process.env.DB_USERNAME;
 const DB_PASSWORD = process.env.DB_PASSWORD;
 
 // Connection string usando las variables del .env
-const MONGODB_URI = `mongodb+srv://${DB_USERNAME}:${DB_PASSWORD}@mongodb.fp1zlj8.mongodb.net/?appName=MongoDB`;
+const MONGODB_URI = `mongodb+srv://${encodeURIComponent(DB_USERNAME)}:${encodeURIComponent(DB_PASSWORD)}@mongodb.fp1zlj8.mongodb.net/?appName=MongoDB`;
+
+console.log('Connecting to MongoDB with URI (masked):', MONGODB_URI.replace(/:([^:@]+)@/, ':****@'));
 
 if (!MONGODB_URI) {
     throw new Error('Please define the MONGODB_URI environment variable');

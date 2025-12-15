@@ -18,6 +18,8 @@ export const metadata: Metadata = {
   description: "Plan your trip to Santiago, Chile",
 };
 
+import AuthProvider from "@/components/AuthProvider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -28,9 +30,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <GoogleMapsProvider>
-          {children}
-        </GoogleMapsProvider>
+        <AuthProvider>
+          <GoogleMapsProvider>
+            {children}
+          </GoogleMapsProvider>
+        </AuthProvider>
       </body>
     </html>
   );
