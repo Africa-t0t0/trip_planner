@@ -73,8 +73,15 @@ export default function Map({ places, selectedPlaceId, onSelectPlace }: MapProps
                             pixelOffset={[0, -50]} // Move up 50px to show above marker
                         >
                             <div className="p-2 max-w-xs">
+                                <div className="relative w-full h-32 mb-2 rounded-md overflow-hidden">
+                                    <img
+                                        src={place.imageUrl}
+                                        alt={place.nombre}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
                                 <h3 className="font-bold text-lg mb-1">{place.nombre}</h3>
-                                <p className="text-sm text-gray-700">{place.descripcion}</p>
+                                <p className="text-sm text-gray-700 line-clamp-3">{place.descripcion}</p>
                             </div>
                         </InfoWindow>
                     )}
