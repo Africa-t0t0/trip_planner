@@ -23,6 +23,7 @@ export default function PlansManager({
     const [selectedPlaceIds, setSelectedPlaceIds] = useState<string[]>([]);
     const [expandedPlanId, setExpandedPlanId] = useState<string | null>(null);
     const [showDaySelector, setShowDaySelector] = useState<string | null>(null);
+    const [daySelectorPos, setDaySelectorPos] = useState<{ top: number, left: number } | null>(null);
 
     const handleTogglePlace = (placeId: string) => {
         setSelectedPlaceIds((prev) =>
@@ -88,8 +89,8 @@ export default function PlansManager({
                                         key={place.id}
                                         onClick={() => handleTogglePlace(place.id)}
                                         className={`p-3 rounded-lg cursor-pointer transition-all ${isSelected
-                                                ? "bg-red-50 border-2 border-red-500"
-                                                : "bg-gray-50 border border-gray-200 hover:border-red-300"
+                                            ? "bg-red-50 border-2 border-red-500"
+                                            : "bg-gray-50 border border-gray-200 hover:border-red-300"
                                             }`}
                                     >
                                         <div className="flex items-center gap-3">
@@ -165,17 +166,41 @@ export default function PlansManager({
                                     {/* Add to Day Button */}
                                     <div className="relative">
                                         <button
-                                            onClick={() =>
-                                                setShowDaySelector(showDaySelector === plan.id ? null : plan.id)
-                                            }
+                                            onClick={(e) => {
+                                                if (showDaySelector === plan.id) {
+                                                    setShowDaySelector(null);
+                                                    setDaySelectorPos(null);
+                                                } else {
+                                                    const rect = e.currentTarget.getBoundingClientRect();
+                                                    setDaySelectorPos({
+                                                        top: rect.bottom + 5,
+                                                        left: rect.left - 100 // Adjust to align roughly left or calculate "right"
+                                                    });
+                                                    // Better alignment logic: align right edge of dropdown to right edge of button
+                                                    // Dropdown width is w-40 (10rem = 160px)
+                                                    // button right = rect.right
+                                                    // dropdown left = rect.right - 160
+                                                    setDaySelectorPos({
+                                                        top: rect.bottom + 5,
+                                                        left: rect.right - 160
+                                                    });
+                                                    setShowDaySelector(plan.id);
+                                                }
+                                            }}
                                             className="p-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all"
                                             title="Agregar a día"
                                         >
                                             <Calendar size={18} />
                                         </button>
 
-                                        {showDaySelector === plan.id && (
-                                            <div className="absolute right-0 top-12 w-40 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 z-50">
+                                        {showDaySelector === plan.id && daySelectorPos && (
+                                            <div
+                                                className="fixed w-40 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 z-[9999]"
+                                                style={{
+                                                    top: `${daySelectorPos.top}px`,
+                                                    left: `${daySelectorPos.left}px`
+                                                }}
+                                            >
                                                 <div className="px-3 py-2 border-b border-gray-100">
                                                     <p className="text-xs font-semibold text-gray-700">Agregar a día:</p>
                                                 </div>
@@ -187,11 +212,21 @@ export default function PlansManager({
                                                             e.stopPropagation();
                                                             onAddPlanToDay(plan.id, day);
                                                             setShowDaySelector(null);
+                                                            setDaySelectorPos(null);
                                                         }}
                                                     >
                                                         Día {day}
                                                     </button>
                                                 ))}
+                                                {/* Backdrop to close */}
+                                                <div
+                                                    className="fixed inset-0 z-[-1]"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setShowDaySelector(null);
+                                                        setDaySelectorPos(null);
+                                                    }}
+                                                />
                                             </div>
                                         )}
                                     </div>

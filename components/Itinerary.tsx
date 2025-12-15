@@ -1,6 +1,6 @@
 import { Place } from "@/data/places";
 import { Plan } from "@/types";
-import { Trash2, MapPin, FolderOpen, ChevronDown, ChevronRight } from "lucide-react";
+import { Trash2, MapPin, FolderOpen, ChevronDown, ChevronRight, Save } from "lucide-react";
 import { useState } from "react";
 
 interface ItineraryProps {
@@ -11,6 +11,7 @@ interface ItineraryProps {
     onRemoveFromDay: (placeId: string, day: number) => void;
     onRemovePlanFromDay: (planId: string, day: number) => void;
     onSelectPlace: (placeId: string) => void;
+    onSave?: () => Promise<void>;
 }
 
 export default function Itinerary({
@@ -21,8 +22,20 @@ export default function Itinerary({
     onRemoveFromDay,
     onRemovePlanFromDay,
     onSelectPlace,
+    onSave,
 }: ItineraryProps) {
     const [expandedPlans, setExpandedPlans] = useState<Set<string>>(new Set());
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleSaveClick = async () => {
+        if (!onSave) return;
+        setIsSaving(true);
+        try {
+            await onSave();
+        } finally {
+            setTimeout(() => setIsSaving(false), 1000); // Visual feedback delay
+        }
+    };
 
     // Get all days that have either places or plans
     const daysWithPlaces = Object.keys(itinerary).map(Number);
@@ -43,7 +56,22 @@ export default function Itinerary({
 
     return (
         <div className="space-y-6">
-            <h2 className="text-xl font-bold text-gray-800 border-b border-gray-200 pb-2">Mi Ruta</h2>
+            <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+                <h2 className="text-xl font-bold text-gray-800">Mi Ruta</h2>
+                {onSave && (
+                    <button
+                        onClick={handleSaveClick}
+                        disabled={isSaving}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${isSaving
+                                ? "bg-green-100 text-green-700"
+                                : "bg-red-600 text-white hover:bg-red-700 shadow-sm"
+                            }`}
+                    >
+                        <Save size={16} />
+                        {isSaving ? "Guardando..." : "Guardar Ruta"}
+                    </button>
+                )}
+            </div>
             {allDays.length === 0 && (
                 <div className="text-center text-gray-500 py-8 italic">
                     No hay días planificados aún. Agrega lugares o planes.
