@@ -75,3 +75,43 @@ export async function DELETE() {
         );
     }
 }
+
+export async function PUT(request: Request) {
+    try {
+        const body = await request.json();
+        const { id, ...updateData } = body;
+
+        if (!id) {
+            return NextResponse.json(
+                { error: 'Place ID is required' },
+                { status: 400 }
+            );
+        }
+
+        const db = await getDatabase();
+        const placesCollection = db.collection<Place>('places');
+
+        const result = await placesCollection.updateOne(
+            { id: id },
+            { $set: updateData }
+        );
+
+        if (result.matchedCount === 0) {
+            return NextResponse.json(
+                { error: 'Place not found' },
+                { status: 404 }
+            );
+        }
+
+        return NextResponse.json({
+            success: true,
+            modifiedCount: result.modifiedCount
+        });
+    } catch (error) {
+        console.error('Error updating place:', error);
+        return NextResponse.json(
+            { error: 'Failed to update place' },
+            { status: 500 }
+        );
+    }
+}

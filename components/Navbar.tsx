@@ -5,18 +5,30 @@ import { useSession, signOut } from "next-auth/react";
 export default function Navbar() {
     const { data: session } = useSession();
 
+    const playMeow = () => {
+        const audio = new Audio("/meow.mp3");
+        audio.volume = 0.2; // Low volume as requested
+        audio.play().catch(e => console.error("Error playing sound:", e));
+    };
+
     return (
         <nav className="w-full bg-red-600 text-white shadow-lg z-50 h-16 flex items-center px-4 md:px-6 sticky top-0 border-b border-red-700">
             <div className="flex items-center gap-3">
 
 
-                <Image
-                    src="/domi-cat.svg"
-                    alt="Domi Cat"
-                    width={40}
-                    height={40}
-                    className="w-10 h-10 object-contain"
-                />
+                <button
+                    onClick={playMeow}
+                    className="focus:outline-none transition-transform active:scale-95"
+                    title="Miau?"
+                >
+                    <Image
+                        src="/domi-cat.svg"
+                        alt="Domi Cat"
+                        width={40}
+                        height={40}
+                        className="w-10 h-10 object-contain"
+                    />
+                </button>
 
                 <div className="flex flex-col">
                     <h1 className="text-xl md:text-2xl font-bold tracking-tight leading-tight">
@@ -39,13 +51,7 @@ export default function Navbar() {
                     href="/management"
                     className="text-sm font-medium text-white/90 hover:text-white hover:underline transition-all"
                 >
-                    Management
-                </a>
-                <a
-                    href="/"
-                    className="text-sm font-medium text-white/90 hover:text-white hover:underline transition-all"
-                >
-                    Home
+                    Agregar Lugar
                 </a>
 
                 <button

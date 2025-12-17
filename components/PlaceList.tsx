@@ -1,6 +1,6 @@
 import { Place } from "@/data/places";
 import { Plan } from "@/types";
-import { Plus, MapPin, Calendar, Image, FolderOpen } from "lucide-react";
+import { Plus, MapPin, Calendar, Image, FolderOpen, Pencil } from "lucide-react";
 import { useState } from "react";
 
 interface PlaceListProps {
@@ -101,9 +101,20 @@ export default function PlaceList({
                                                 dropdownOpenPlaceId === place.id ? null : place.id
                                             );
                                         }}
+                                        title="Agregar a..."
                                     >
                                         <Plus size={18} />
                                     </button>
+
+                                    {/* Edit Button */}
+                                    <a
+                                        href={`/management?edit=${place.id}`}
+                                        className="absolute right-12 top-0 p-2 bg-white hover:bg-gray-100 rounded-full text-gray-600 hover:text-red-500 shadow-md transition-all duration-200 hover:scale-110"
+                                        onClick={(e) => e.stopPropagation()}
+                                        title="Editar Lugar"
+                                    >
+                                        <Pencil size={18} />
+                                    </a>
 
                                     {/* Enhanced Dropdown with Days and Plans */}
                                     {dropdownOpenPlaceId === place.id && (

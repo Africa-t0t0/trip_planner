@@ -1,16 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Navbar from "@/components/Navbar";
-import { useRouter } from "next/navigation";
-import { PlusCircle, MapPin, Save, ArrowLeft } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { PlusCircle, MapPin, Save, ArrowLeft, Pencil } from "lucide-react";
 
-export default function ManagementPage() {
+function ManagementContent() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState<{ type: "success" | "error", text: string } | null>(null);
+    const searchParams = useSearchParams();
+    const editId = searchParams.get("edit");
+    const isEditing = !!editId;
 
     const [formData, setFormData] = useState({
+        id: "",
         nombre: "",
         latitud: "",
         longitud: "",
@@ -29,6 +33,44 @@ export default function ManagementPage() {
         }));
     };
 
+    useEffect(() => {
+        const fetchPlace = async () => {
+            if (!editId) return;
+            setLoading(true);
+            try {
+                // In a real app we would have a GET /api/places/:id endpoint
+                // For now we fetch all and filter
+                const res = await fetch("/api/places");
+                if (!res.ok) throw new Error("Failed to fetch places");
+                const places = await res.json();
+                const place = places.find((p: any) => p.id === editId);
+
+                if (place) {
+                    setFormData({
+                        id: place.id,
+                        nombre: place.nombre,
+                        latitud: place.coordenadas.latitud.toString(),
+                        longitud: place.coordenadas.longitud.toString(),
+                        comunas: place.comunas.join(", "),
+                        estacionamiento: place.estacionamiento,
+                        descripcion: place.descripcion,
+                        tips: place.tips,
+                        imageUrl: place.imageUrl
+                    });
+                } else {
+                    setMessage({ type: "error", text: "Lugar no encontrado" });
+                }
+            } catch (error) {
+                console.error("Error fetching place:", error);
+                setMessage({ type: "error", text: "Error al cargar el lugar" });
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchPlace();
+    }, [editId]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -36,7 +78,7 @@ export default function ManagementPage() {
 
         try {
             const placeData = {
-                id: crypto.randomUUID(),
+                id: isEditing ? formData.id : crypto.randomUUID(),
                 nombre: formData.nombre,
                 coordenadas: {
                     latitud: parseFloat(formData.latitud),
@@ -50,7 +92,7 @@ export default function ManagementPage() {
             };
 
             const response = await fetch("/api/places", {
-                method: "POST",
+                method: isEditing ? "PUT" : "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
@@ -58,27 +100,30 @@ export default function ManagementPage() {
             });
 
             if (!response.ok) {
-                throw new Error("Failed to create place");
+                throw new Error("Failed to save place");
             }
 
-            setMessage({ type: "success", text: "Lugar creado exitosamente!" });
-            setFormData({
-                nombre: "",
-                latitud: "",
-                longitud: "",
-                comunas: "",
-                estacionamiento: "",
-                descripcion: "",
-                tips: "",
-                imageUrl: ""
-            });
+            setMessage({ type: "success", text: isEditing ? "Lugar actualizado exitosamente!" : "Lugar creado exitosamente!" });
+            if (!isEditing) {
+                setFormData({
+                    id: "",
+                    nombre: "",
+                    latitud: "",
+                    longitud: "",
+                    comunas: "",
+                    estacionamiento: "",
+                    descripcion: "",
+                    tips: "",
+                    imageUrl: ""
+                });
+            }
 
             // Optional: Redirect after delay
             // setTimeout(() => router.push("/"), 2000);
 
         } catch (error) {
             console.error("Error creating place:", error);
-            setMessage({ type: "error", text: "Error al crear el lugar. Inténtalo de nuevo." });
+            setMessage({ type: "error", text: "Error al guardar el lugar. Inténtalo de nuevo." });
         } finally {
             setLoading(false);
         }
@@ -97,8 +142,12 @@ export default function ManagementPage() {
                         <ArrowLeft size={24} />
                     </button>
                     <h1 className="text-3xl font-bold text-slate-800 flex items-center gap-3">
-                        <PlusCircle className="text-red-600" size={32} />
-                        Agregar Nuevo Lugar
+                        {isEditing ? (
+                            <Pencil className="text-red-600" size={32} />
+                        ) : (
+                            <PlusCircle className="text-red-600" size={32} />
+                        )}
+                        {isEditing ? "Editar Lugar" : "Agregar Nuevo Lugar"}
                     </h1>
                 </div>
 
@@ -249,8 +298,8 @@ export default function ManagementPage() {
                                 </>
                             ) : (
                                 <>
-                                    <PlusCircle size={20} />
-                                    Crear Lugar
+                                    {isEditing ? <Save size={20} /> : <PlusCircle size={20} />}
+                                    {isEditing ? "Guardar Cambios" : "Crear Lugar"}
                                 </>
                             )}
                         </button>
@@ -258,5 +307,13 @@ export default function ManagementPage() {
                 </form>
             </div>
         </div>
+    );
+}
+
+export default function ManagementPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <ManagementContent />
+        </Suspense>
     );
 }
