@@ -201,6 +201,26 @@ export default function Home() {
         });
     };
 
+    const handleUpdatePlan = async (planId: string, updatedData: Partial<Plan>) => {
+        try {
+            const res = await fetch(`/api/plans/${planId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedData),
+            });
+
+            if (res.ok) {
+                setPlans((prev) => prev.map((p) => (p.id === planId ? { ...p, ...updatedData } : p)));
+            } else {
+                console.error('Failed to update plan');
+                alert('Failed to update plan');
+            }
+        } catch (error) {
+            console.error('Error updating plan:', error);
+            alert('Error updating plan');
+        }
+    };
+
     const handleRemovePlanFromDay = (planId: string, day: number) => {
         setDayPlans((prev) => {
             const currentDayPlans = prev[day] || [];
@@ -220,9 +240,15 @@ export default function Home() {
         const plan = plans.find(p => p.id === planId);
         if (!plan) return;
 
-        if (plan.placeIds.includes(placeId)) return;
+        // Check if place is already in plan
+        const exists = plan.items?.some(item => item.placeId === placeId) || plan.placeIds?.includes(placeId);
+        if (exists) return;
 
-        const updatedPlan = { ...plan, placeIds: [...plan.placeIds, placeId] };
+        const newItem = { placeId, duration: 60 };
+        const updatedPlan = {
+            ...plan,
+            items: [...(plan.items || []), newItem]
+        };
 
         // Update locally
         setPlans(prev => prev.map(p => p.id === planId ? updatedPlan : p));
@@ -231,7 +257,7 @@ export default function Home() {
         fetch(`/api/plans/${planId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ placeIds: updatedPlan.placeIds })
+            body: JSON.stringify({ items: updatedPlan.items })
         }).catch(err => console.error("Failed to update plan", err));
     };
 
@@ -300,6 +326,7 @@ export default function Home() {
                                 plans={plans}
                                 places={places}
                                 onCreatePlan={handleCreatePlan}
+                                onUpdatePlan={handleUpdatePlan}
                                 onDeletePlan={handleDeletePlan}
                                 onAddPlanToDay={handleAddPlanToDay}
                             />

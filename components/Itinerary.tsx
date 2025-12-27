@@ -81,7 +81,7 @@ export default function Itinerary({
                 const dayPlaces = itinerary[day] || [];
                 const planIds = dayPlans[day] || [];
                 const dayPlansData = planIds.map((id) => plans.find((p) => p.id === id)).filter(Boolean) as Plan[];
-                const totalItems = dayPlaces.length + dayPlansData.reduce((acc, plan) => acc + plan.placeIds.length, 0);
+                const totalItems = dayPlaces.length + dayPlansData.reduce((acc, plan) => acc + (plan.items?.length || plan.placeIds?.length || 0), 0);
 
                 return (
                     <div key={day} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -96,7 +96,9 @@ export default function Itinerary({
                             {/* Display Plans */}
                             {dayPlansData.map((plan) => {
                                 const isExpanded = expandedPlans.has(plan.id);
-                                const planPlaces = places.filter((p) => plan.placeIds.includes(p.id));
+                                const planPlaces = places.filter((p) =>
+                                    plan.items?.some(item => item.placeId === p.id) || plan.placeIds?.includes(p.id)
+                                );
 
                                 return (
                                     <div key={plan.id} className="border border-green-200 bg-green-50 rounded-lg overflow-hidden">

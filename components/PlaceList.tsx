@@ -157,7 +157,7 @@ export default function PlaceList({
                                                     </div>
                                                 ) : (
                                                     plans.map((plan) => {
-                                                        const alreadyInPlan = plan.placeIds.includes(place.id);
+                                                        const alreadyInPlan = plan.items?.some(item => item.placeId === place.id) || plan.placeIds?.includes(place.id);
                                                         return (
                                                             <button
                                                                 key={plan.id}

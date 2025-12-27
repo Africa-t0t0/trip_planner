@@ -6,7 +6,8 @@ export interface UserPlan {
     username: string; // Owner username
     nombre: string;
     description?: string;
-    placeIds: string[]; // Array of Place IDs
+    items: { placeId: string; duration: number }[]; // Replaces placeIds
+    placeIds?: string[]; // Deprecated
     createdAt: Date;
     updatedAt: Date;
 }

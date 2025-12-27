@@ -36,7 +36,20 @@ export async function GET() {
             .sort({ createdAt: -1 })
             .toArray();
 
-        return NextResponse.json(plans);
+        // Map legacy plans to new structure if needed
+        // Map legacy plans to new structure if needed
+        const mappedPlans = plans.map(plan => {
+            const p = plan as any;
+            if (!p.items && p.placeIds) {
+                return {
+                    ...plan,
+                    items: p.placeIds.map((id: string) => ({ placeId: id, duration: 60 })) // Default 60 mins
+                };
+            }
+            return plan;
+        });
+
+        return NextResponse.json(mappedPlans);
 
     } catch (error) {
         console.error('Error fetching plans:', error);
@@ -59,7 +72,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
-        const { nombre, description, placeIds } = body;
+        const { nombre, description, items } = body;
 
         if (!nombre) {
             return NextResponse.json({ error: 'Nombre is required' }, { status: 400 });
@@ -70,7 +83,7 @@ export async function POST(request: Request) {
             username: user.username,
             nombre,
             description: description || '',
-            placeIds: placeIds || [],
+            items: items || [],
             createdAt: new Date(),
             updatedAt: new Date(),
         };

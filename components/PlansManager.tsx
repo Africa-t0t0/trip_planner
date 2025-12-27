@@ -1,48 +1,91 @@
 import { useState } from "react";
 import { Plan } from "@/types";
 import { Place } from "@/data/places";
-import { Plus, Trash2, Calendar, CheckSquare, Square } from "lucide-react";
+import { Plus, Trash2, Calendar, CheckSquare, Square, Pencil } from "lucide-react";
 
 interface PlansManagerProps {
     plans: Plan[];
     places: Place[];
     onCreatePlan: (plan: Omit<Plan, "id">) => void;
+    onUpdatePlan: (planId: string, plan: Partial<Plan>) => void;
     onDeletePlan: (planId: string) => void;
     onAddPlanToDay: (planId: string, day: number) => void;
+}
+
+interface SelectedItem {
+    placeId: string;
+    duration: number;
 }
 
 export default function PlansManager({
     plans,
     places,
     onCreatePlan,
+    onUpdatePlan,
     onDeletePlan,
     onAddPlanToDay,
 }: PlansManagerProps) {
     const [isCreating, setIsCreating] = useState(false);
+    const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
     const [newPlanName, setNewPlanName] = useState("");
-    const [selectedPlaceIds, setSelectedPlaceIds] = useState<string[]>([]);
+    const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
     const [expandedPlanId, setExpandedPlanId] = useState<string | null>(null);
     const [showDaySelector, setShowDaySelector] = useState<string | null>(null);
     const [daySelectorPos, setDaySelectorPos] = useState<{ top: number, left: number } | null>(null);
 
     const handleTogglePlace = (placeId: string) => {
-        setSelectedPlaceIds((prev) =>
-            prev.includes(placeId)
-                ? prev.filter((id) => id !== placeId)
-                : [...prev, placeId]
+        setSelectedItems((prev) => {
+            const exists = prev.find(item => item.placeId === placeId);
+            if (exists) {
+                return prev.filter((item) => item.placeId !== placeId);
+            } else {
+                return [...prev, { placeId, duration: 60 }]; // Default 60 mins
+            }
+        });
+    };
+
+    const handleDurationChange = (placeId: string, duration: number) => {
+        setSelectedItems((prev) =>
+            prev.map(item =>
+                item.placeId === placeId ? { ...item, duration } : item
+            )
         );
     };
 
     const handleCreatePlan = () => {
-        if (newPlanName.trim() && selectedPlaceIds.length > 0) {
-            onCreatePlan({
-                nombre: newPlanName.trim(),
-                placeIds: selectedPlaceIds,
-            });
+        if (newPlanName.trim() && selectedItems.length > 0) {
+            if (editingPlanId) {
+                onUpdatePlan(editingPlanId, {
+                    nombre: newPlanName.trim(),
+                    items: selectedItems,
+                });
+                setEditingPlanId(null);
+            } else {
+                onCreatePlan({
+                    nombre: newPlanName.trim(),
+                    items: selectedItems,
+                });
+            }
             setNewPlanName("");
-            setSelectedPlaceIds([]);
+            setSelectedItems([]);
             setIsCreating(false);
         }
+    };
+
+    const startEditing = (plan: Plan) => {
+        setNewPlanName(plan.nombre);
+        // Ensure legacy plans are handled
+        const items = plan.items || (plan.placeIds ? plan.placeIds.map(id => ({ placeId: id, duration: 60 })) : []);
+        setSelectedItems(items);
+        setEditingPlanId(plan.id);
+        setIsCreating(true);
+    };
+
+    const cancelEditing = () => {
+        setIsCreating(false);
+        setEditingPlanId(null);
+        setNewPlanName("");
+        setSelectedItems([]);
     };
 
     return (
@@ -61,9 +104,12 @@ export default function PlansManager({
                 </button>
             </div>
 
-            {/* Create New Plan Form */}
+            {/* Create/Edit Plan Form */}
             {isCreating && (
                 <div className="bg-white border-2 border-red-500 rounded-xl p-4 space-y-4 shadow-lg">
+                    <h3 className="text-lg font-bold text-gray-800">
+                        {editingPlanId ? "Editar Plan" : "Crear Nuevo Plan"}
+                    </h3>
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
                             Nombre del Plan
@@ -79,30 +125,46 @@ export default function PlansManager({
 
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Selecciona Destinos ({selectedPlaceIds.length})
+                            Selecciona Destinos ({selectedItems.length})
                         </label>
                         <div className="max-h-60 overflow-y-auto space-y-2 border border-gray-200 rounded-lg p-2">
                             {places.map((place) => {
-                                const isSelected = selectedPlaceIds.includes(place.id);
+                                const selectedItem = selectedItems.find(item => item.placeId === place.id);
+                                const isSelected = !!selectedItem;
                                 return (
                                     <div
                                         key={place.id}
-                                        onClick={() => handleTogglePlace(place.id)}
-                                        className={`p-3 rounded-lg cursor-pointer transition-all ${isSelected
-                                            ? "bg-red-50 border-2 border-red-500"
-                                            : "bg-gray-50 border border-gray-200 hover:border-red-300"
+                                        className={`p-3 rounded-lg border transition-all ${isSelected
+                                            ? "bg-red-50 border-red-500"
+                                            : "bg-gray-50 border-gray-200 hover:border-red-300"
                                             }`}
                                     >
                                         <div className="flex items-center gap-3">
-                                            {isSelected ? (
-                                                <CheckSquare className="text-red-500" size={20} />
-                                            ) : (
-                                                <Square className="text-gray-400" size={20} />
-                                            )}
-                                            <div className="flex-1">
+                                            <div onClick={() => handleTogglePlace(place.id)} className="cursor-pointer">
+                                                {isSelected ? (
+                                                    <CheckSquare className="text-red-500" size={20} />
+                                                ) : (
+                                                    <Square className="text-gray-400" size={20} />
+                                                )}
+                                            </div>
+                                            <div className="flex-1 cursor-pointer" onClick={() => handleTogglePlace(place.id)}>
                                                 <p className="font-medium text-gray-900">{place.nombre}</p>
                                                 <p className="text-xs text-gray-500">{place.comunas.join(", ")}</p>
                                             </div>
+                                            {isSelected && (
+                                                <div className="flex items-center gap-1">
+                                                    <input
+                                                        type="number"
+                                                        value={selectedItem.duration}
+                                                        onChange={(e) => handleDurationChange(place.id, parseInt(e.target.value) || 0)}
+                                                        className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-red-500"
+                                                        placeholder="min"
+                                                        min="0"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    />
+                                                    <span className="text-xs text-gray-500">min</span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 );
@@ -113,17 +175,13 @@ export default function PlansManager({
                     <div className="flex gap-2">
                         <button
                             onClick={handleCreatePlan}
-                            disabled={!newPlanName.trim() || selectedPlaceIds.length === 0}
+                            disabled={!newPlanName.trim() || selectedItems.length === 0}
                             className="flex-1 py-2 bg-red-500 hover:bg-red-600 disabled:bg-gray-300 text-white font-semibold rounded-lg transition-all"
                         >
-                            Crear Plan
+                            {editingPlanId ? "Guardar Cambios" : "Crear Plan"}
                         </button>
                         <button
-                            onClick={() => {
-                                setIsCreating(false);
-                                setNewPlanName("");
-                                setSelectedPlaceIds([]);
-                            }}
+                            onClick={cancelEditing}
                             className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg transition-all"
                         >
                             Cancelar
@@ -142,7 +200,12 @@ export default function PlansManager({
                 )}
 
                 {plans.map((plan) => {
-                    const planPlaces = places.filter((p) => plan.placeIds.includes(p.id));
+                    const planItems = plan.items || [];
+                    // Fallback for legacy if not handled by API yet
+                    if (planItems.length === 0 && plan.placeIds) {
+                        plan.placeIds.forEach(id => planItems.push({ placeId: id, duration: 60 }));
+                    }
+
                     const isExpanded = expandedPlanId === plan.id;
 
                     return (
@@ -158,7 +221,7 @@ export default function PlansManager({
                                 >
                                     <h3 className="font-bold text-gray-900">{plan.nombre}</h3>
                                     <p className="text-sm text-gray-500">
-                                        {planPlaces.length} destino{planPlaces.length !== 1 ? "s" : ""}
+                                        {planItems.length} destino{planItems.length !== 1 ? "s" : ""}
                                     </p>
                                 </div>
 
@@ -172,14 +235,6 @@ export default function PlansManager({
                                                     setDaySelectorPos(null);
                                                 } else {
                                                     const rect = e.currentTarget.getBoundingClientRect();
-                                                    setDaySelectorPos({
-                                                        top: rect.bottom + 5,
-                                                        left: rect.left - 100 // Adjust to align roughly left or calculate "right"
-                                                    });
-                                                    // Better alignment logic: align right edge of dropdown to right edge of button
-                                                    // Dropdown width is w-40 (10rem = 160px)
-                                                    // button right = rect.right
-                                                    // dropdown left = rect.right - 160
                                                     setDaySelectorPos({
                                                         top: rect.bottom + 5,
                                                         left: rect.right - 160
@@ -231,6 +286,18 @@ export default function PlansManager({
                                         )}
                                     </div>
 
+                                    {/* Edit Button */}
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            startEditing(plan);
+                                        }}
+                                        className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all"
+                                        title="Editar plan"
+                                    >
+                                        <Pencil size={18} />
+                                    </button>
+
                                     {/* Delete Button */}
                                     <button
                                         onClick={() => onDeletePlan(plan.id)}
@@ -245,18 +312,25 @@ export default function PlansManager({
                             {/* Expanded Places List */}
                             {isExpanded && (
                                 <div className="px-4 pb-4 border-t border-gray-100 pt-3 space-y-2">
-                                    {planPlaces.map((place, idx) => (
-                                        <div
-                                            key={place.id}
-                                            className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg"
-                                        >
-                                            <span className="text-xs font-bold text-gray-400 w-6">{idx + 1}</span>
-                                            <div className="flex-1">
-                                                <p className="text-sm font-medium text-gray-900">{place.nombre}</p>
-                                                <p className="text-xs text-gray-500">{place.comunas.join(", ")}</p>
+                                    {planItems.map((item, idx) => {
+                                        const place = places.find(p => p.id === item.placeId);
+                                        if (!place) return null;
+                                        return (
+                                            <div
+                                                key={item.placeId}
+                                                className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg"
+                                            >
+                                                <span className="text-xs font-bold text-gray-400 w-6">{idx + 1}</span>
+                                                <div className="flex-1">
+                                                    <p className="text-sm font-medium text-gray-900">{place.nombre}</p>
+                                                    <p className="text-xs text-gray-500">{place.comunas.join(", ")}</p>
+                                                </div>
+                                                <div className="text-sm font-semibold text-gray-600 bg-gray-200 px-2 py-1 rounded">
+                                                    {item.duration} min
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>

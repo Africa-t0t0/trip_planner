@@ -1,5 +1,12 @@
+export interface PlanItem {
+    placeId: string;
+    duration: number; // Duration in minutes
+}
+
 export interface Plan {
     id: string;
     nombre: string;
-    placeIds: string[];
+    items: PlanItem[];
+    // Deprecated but kept for type compatibility during migration if needed, though we will try to move away from it
+    placeIds?: string[];
 }

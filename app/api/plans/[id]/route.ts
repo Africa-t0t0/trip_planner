@@ -20,12 +20,12 @@ export async function PUT(
         if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
         const body = await request.json();
-        const { nombre, description, placeIds } = body; // Can update any of these
+        const { nombre, description, items } = body; // Can update any of these
 
         const updateData: Partial<UserPlan> = { updatedAt: new Date() };
         if (nombre !== undefined) updateData.nombre = nombre;
         if (description !== undefined) updateData.description = description;
-        if (placeIds !== undefined) updateData.placeIds = placeIds;
+        if (items !== undefined) updateData.items = items;
 
         const result = await db.collection<UserPlan>('plans').updateOne(
             { id: id, username: user.username }, // Ensure ownership
