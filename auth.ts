@@ -19,6 +19,23 @@ async function getUser(username: string): Promise<User | null> {
 export const { handlers, auth, signIn, signOut } = NextAuth({
     ...authConfig,
     secret: process.env.NEXTAUTH_SECRET,
+    session: { strategy: 'jwt' },
+    callbacks: {
+        async jwt({ token, user }) {
+            if (user) {
+                token.id = user.id;
+                token.username = (user as any).username;
+            }
+            return token;
+        },
+        async session({ session, token }) {
+            if (token && session.user) {
+                session.user.id = token.id as string;
+                // session.user.username = token.username as string;
+            }
+            return session;
+        },
+    },
     providers: [
         Credentials({
             async authorize(credentials) {

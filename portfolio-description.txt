@@ -1,0 +1,28 @@
+Project: Trip Planner (Santiago Roadmap)
+
+Description:
+Trip Planner is a comprehensive web application designed to help users discover, organize, and manage travel itineraries. Originally conceived as a local guidance system for Santiago, it has evolved into a full-featured trip planning tool. The application allows users to browse curated destinations, create custom travel plans, and visualize routes on interactive maps. It features a secure authentication system, a responsive design for on-the-go access, and an intuitive management interface for adding new places and categories.
+
+Key Features:
+• User Authentication: Secure login system using NextAuth.js with JWT-based sessions and encrypted password storage.
+• Itinerary Management: Users can create, edit, and delete custom travel plans.
+• Optimal Route Calculation: Intelligent algorithm to determine the most efficient path for visiting selected places in the shortest possible time.
+• Interactive Maps: Integration with Google Maps to visualize destinations and routes.
+• Responsive Design: Fully optimized for mobile and desktop devices using a modern Tailwind CSS UI.
+• Dynamic Content: Real-time data management for places and travel categories backed by MongoDB.
+
+Tech Stack:
+
+Frontend:
+• Framework: Next.js 15+ (App Router & Server Components)
+• Language: TypeScript
+• Styling: Tailwind CSS
+• Icons: Lucide React
+
+Backend & Database:
+• API: Next.js API Routes (Serverless)
+• Database: MongoDB (NoSQL)
+• Authentication: NextAuth.js v5 (JWT Strategy, Credentials Provider, Bcrypt)
+
+External Services:
+• Maps: Google Maps API via @vis.gl/react-google-maps
