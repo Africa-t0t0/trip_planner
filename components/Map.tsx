@@ -46,47 +46,62 @@ export default function Map({ places, selectedPlaceId, onSelectPlace }: MapProps
             disableDefaultUI={false}
             className="w-full h-full"
         >
-            {places.map((place) => (
-                <AdvancedMarker
-                    key={place.id}
-                    position={{
-                        lat: place.coordenadas.latitud,
-                        lng: place.coordenadas.longitud
-                    }}
-                    onClick={() => handleMarkerClick(place.id)}
-                >
-                    {/* Custom marker pin */}
-                    <div className="relative">
-                        <div className="w-8 h-8 bg-red-600 rounded-full border-4 border-white shadow-lg flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
-                            <div className="w-3 h-3 bg-white rounded-full"></div>
-                        </div>
-                    </div>
+            {places.map((place) => {
+                const isSelected = selectedPlaceId === place.id;
 
-                    {/* Info Window */}
-                    {openInfoWindowId === place.id && (
-                        <InfoWindow
-                            position={{
-                                lat: place.coordenadas.latitud,
-                                lng: place.coordenadas.longitud
-                            }}
-                            onCloseClick={() => setOpenInfoWindowId(null)}
-                            pixelOffset={[0, -50]} // Move up 50px to show above marker
-                        >
-                            <div className="p-2 max-w-xs">
-                                <div className="relative w-full h-32 mb-2 rounded-md overflow-hidden">
-                                    <img
-                                        src={place.imageUrl}
-                                        alt={place.nombre}
-                                        className="w-full h-full object-cover"
-                                    />
-                                </div>
-                                <h3 className="font-bold text-lg mb-1">{place.nombre}</h3>
-                                <p className="text-sm text-gray-700 line-clamp-3">{place.descripcion}</p>
+                return (
+                    <AdvancedMarker
+                        key={place.id}
+                        position={{
+                            lat: place.coordenadas.latitud,
+                            lng: place.coordenadas.longitud
+                        }}
+                        onClick={() => handleMarkerClick(place.id)}
+                        zIndex={isSelected ? 50 : 1}
+                    >
+                        {/* Custom Modern marker pin */}
+                        <div className="relative group cursor-pointer outline-none">
+                            <div className={`
+                            flex items-center justify-center rounded-full transition-all duration-300 ease-out shadow-md
+                            ${isSelected
+                                    ? "w-10 h-10 bg-white border-[3px] border-rose-600 scale-110 shadow-[0_4px_16px_rgb(225,29,72,0.4)]"
+                                    : "w-8 h-8 bg-white border-[2.5px] border-rose-500 group-hover:border-rose-600 group-hover:scale-110"
+                                }
+                        `}>
+                                <div className={`
+                                rounded-full transition-colors duration-300 
+                                ${isSelected ? "w-4 h-4 bg-rose-600" : "w-2.5 h-2.5 bg-rose-500 group-hover:bg-rose-600"}
+                            `}></div>
                             </div>
-                        </InfoWindow>
-                    )}
-                </AdvancedMarker>
-            ))}
+                        </div>
+
+                        {/* Info Window */}
+                        {openInfoWindowId === place.id && (
+                            <InfoWindow
+                                position={{
+                                    lat: place.coordenadas.latitud,
+                                    lng: place.coordenadas.longitud
+                                }}
+                                onCloseClick={() => setOpenInfoWindowId(null)}
+                                pixelOffset={[0, -40]}
+                                className="p-0 border-0"
+                            >
+                                <div className="p-3 max-w-[240px] bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-100 font-sans">
+                                    <div className="relative w-full h-28 mb-3 rounded-lg overflow-hidden bg-slate-100">
+                                        <img
+                                            src={place.imageUrl}
+                                            alt={place.nombre}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    </div>
+                                    <h3 className="font-bold text-[15px] text-slate-800 mb-1 leading-tight">{place.nombre}</h3>
+                                    <p className="text-[12px] text-slate-500 line-clamp-2 leading-relaxed">{place.descripcion}</p>
+                                </div>
+                            </InfoWindow>
+                        )}
+                    </AdvancedMarker>
+                )
+            })}
         </GoogleMap>
     );
 }

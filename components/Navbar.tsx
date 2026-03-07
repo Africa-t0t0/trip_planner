@@ -6,35 +6,18 @@ import NavbarLayout from "./NavbarLayout";
 export default function Navbar() {
     const { data: session } = useSession();
 
-    const playMeow = () => {
-        const audio = new Audio("/meow.mp3");
-        audio.volume = 0.2; // Low volume as requested
-        audio.play().catch(e => console.error("Error playing sound:", e));
-    };
-
-
     const leftContent = (
         <>
-            <button
-                onClick={playMeow}
-                className="focus:outline-none transition-transform active:scale-95"
-                title="Miau?"
-            >
-                <Image
-                    src="/domi-cat.svg"
-                    alt="Domi Cat"
-                    width={40}
-                    height={40}
-                    className="w-10 h-10 object-contain"
-                />
-            </button>
+            <div className="p-1 bg-red-50 rounded-xl text-red-600">
+                <MapPin size={28} strokeWidth={2.5} />
+            </div>
 
             <div className="flex flex-col">
-                <h1 className="text-xl md:text-2xl font-bold tracking-tight leading-tight">
+                <h1 className="text-xl md:text-xl font-bold tracking-tight text-slate-900 leading-none">
                     Trip Planner
                 </h1>
-                <p className="text-xs text-red-100 hidden md:block">
-                    Local guidance system
+                <p className="text-[10px] font-medium text-slate-500 uppercase tracking-widest hidden md:block mt-0.5">
+                    Guidance System
                 </p>
             </div>
         </>
@@ -43,26 +26,26 @@ export default function Navbar() {
     const centerContent = (
         <a
             href="/management"
-            className="text-sm font-medium text-white/90 hover:text-white hover:underline transition-all"
+            className="text-sm font-medium text-slate-600 hover:text-red-600 transition-colors"
         >
-            Agregar Lugar
+            Panel Admin
         </a>
     );
 
     const rightContent = (
         <>
             {session && (
-                <span className="text-xs font-semibold bg-red-700 px-2 py-1 rounded-full">
+                <span className="text-xs font-semibold bg-slate-100 text-slate-700 px-3 py-1.5 rounded-full border border-slate-200">
                     {session.user?.name || session.user?.email}
                 </span>
             )}
 
             <button
                 onClick={() => signOut()}
-                className="p-1 hover:bg-red-700 rounded-full transition-colors"
+                className="p-2 hover:bg-red-50 rounded-full transition-colors text-slate-400 hover:text-red-600"
                 title="Cerrar Sesión"
             >
-                <LogOut size={20} className="text-white/90 hover:text-white" />
+                <LogOut size={20} />
             </button>
         </>
     );
@@ -71,11 +54,11 @@ export default function Navbar() {
         <>
             <button
                 onClick={() => signOut()}
-                className="p-1"
+                className="p-2 text-slate-400 hover:text-red-600 transition-colors"
             >
-                <LogOut size={20} className="text-red-200" />
+                <LogOut size={20} />
             </button>
-            <Compass size={20} className="text-red-200" />
+            <Compass size={20} className="text-slate-400" />
         </>
     );
 

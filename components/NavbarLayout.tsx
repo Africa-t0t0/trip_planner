@@ -1,4 +1,6 @@
 import { ReactNode } from "react";
+import Link from "next/link";
+import Image from "next/image";
 
 interface NavbarLayoutProps {
     left?: ReactNode;
@@ -9,10 +11,12 @@ interface NavbarLayoutProps {
 
 export default function NavbarLayout({ left, center, right, mobileRight }: NavbarLayoutProps) {
     return (
-        <nav className="w-full bg-red-600 text-white shadow-lg z-50 h-16 flex items-center px-4 md:px-6 sticky top-0 border-b border-red-700">
+        <nav className="w-full bg-white/80 backdrop-blur-md text-slate-800 shadow-sm z-50 h-16 flex items-center px-4 md:px-6 sticky top-0 border-b border-slate-100 transition-colors">
             {/* Left Side */}
             <div className="flex items-center gap-3">
-                {left}
+                <Link href="/" className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
+                    {left}
+                </Link>
             </div>
 
             {/* Left-Center Zone */}
