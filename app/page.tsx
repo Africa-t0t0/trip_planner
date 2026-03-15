@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import Navbar from "@/components/Navbar";
 import PlaceList from "@/components/PlaceList";
@@ -10,6 +10,7 @@ import DatabaseStatus from "@/components/DatabaseStatus";
 import { Place } from "@/app/models/places";
 import { Plan } from "@/types";
 import { Calendar, List, FolderPlus } from "lucide-react";
+import type { PolylineData } from "@/components/Map";
 
 // Dynamically import Map to prevent SSR issues with Leaflet
 const Map = dynamic(() => import("@/components/Map"), {
@@ -29,6 +30,7 @@ export default function Home() {
     const [plans, setPlans] = useState<Plan[]>([]);
     const [dayPlans, setDayPlans] = useState<Record<number, string[]>>({});
     const [activeTab, setActiveTab] = useState<"places" | "plans" | "itinerary">("places");
+    const [expandedPlanId, setExpandedPlanId] = useState<string | null>(null);
 
     // Fetch places and plans from MongoDB API
     useEffect(() => {
@@ -261,6 +263,76 @@ export default function Home() {
         }).catch(err => console.error("Failed to update plan", err));
     };
 
+    // Compute polylines
+    const polylines = useMemo<PolylineData[]>(() => {
+        const result: PolylineData[] = [];
+
+        if (activeTab === "itinerary") {
+            const colors = ["#ef4444", "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899", "#14b8a6"];
+            const allDays = Array.from(
+                new Set([...Object.keys(itinerary).map(Number), ...Object.keys(dayPlans).map(Number)])
+            ).sort((a, b) => a - b);
+
+            allDays.forEach((day, index) => {
+                const path: { lat: number; lng: number }[] = [];
+
+                // First plans
+                const plansForDay = (dayPlans[day] || [])
+                    .map(id => plans.find(p => p.id === id))
+                    .filter((p): p is Plan => !!p);
+
+                plansForDay.forEach(plan => {
+                    const planItems = plan.items || [];
+                    if (planItems.length === 0 && plan.placeIds) {
+                        plan.placeIds.forEach(id => planItems.push({ placeId: id, duration: 60 }));
+                    }
+                    planItems.forEach(item => {
+                        const place = places.find(p => p.id === item.placeId);
+                        if (place) {
+                            path.push({ lat: place.coordenadas.latitud, lng: place.coordenadas.longitud });
+                        }
+                    });
+                });
+
+                // Then individual places
+                (itinerary[day] || []).forEach(place => {
+                    path.push({ lat: place.coordenadas.latitud, lng: place.coordenadas.longitud });
+                });
+
+                if (path.length > 1) {
+                    result.push({
+                        id: `day-${day}`,
+                        path,
+                        color: colors[index % colors.length]
+                    });
+                }
+            });
+        } else if (activeTab === "plans" && expandedPlanId) {
+            const plan = plans.find(p => p.id === expandedPlanId);
+            if (plan) {
+                const path: { lat: number; lng: number }[] = [];
+                const planItems = plan.items ? [...plan.items] : [];
+                if (planItems.length === 0 && plan.placeIds) {
+                    plan.placeIds.forEach(id => planItems.push({ placeId: id, duration: 60 }));
+                }
+                planItems.forEach(item => {
+                    const place = places.find(p => p.id === item.placeId);
+                    if (place) {
+                        path.push({ lat: place.coordenadas.latitud, lng: place.coordenadas.longitud });
+                    }
+                });
+                if (path.length > 1) {
+                    result.push({
+                        id: `plan-${plan.id}`,
+                        path,
+                        color: "#e11d48"
+                    });
+                }
+            }
+        }
+
+        return result;
+    }, [activeTab, itinerary, dayPlans, plans, places, expandedPlanId]);
 
     return (
         <div className="flex flex-col h-screen overflow-hidden bg-white">
@@ -277,8 +349,8 @@ export default function Home() {
                         <div className="flex w-full bg-slate-100/80 p-1 rounded-xl shadow-sm">
                             <button
                                 className={`flex-1 py-2 text-sm font-semibold flex items-center justify-center gap-2 rounded-lg transition-all duration-200 ${activeTab === "places"
-                                        ? "text-rose-600 bg-white shadow-[0_1px_3px_rgb(0,0,0,0.1)]"
-                                        : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+                                    ? "text-rose-600 bg-white shadow-[0_1px_3px_rgb(0,0,0,0.1)]"
+                                    : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
                                     }`}
                                 onClick={() => setActiveTab("places")}
                             >
@@ -287,8 +359,8 @@ export default function Home() {
                             </button>
                             <button
                                 className={`flex-1 py-2 text-sm font-semibold flex items-center justify-center gap-2 rounded-lg transition-all duration-200 ${activeTab === "plans"
-                                        ? "text-rose-600 bg-white shadow-[0_1px_3px_rgb(0,0,0,0.1)]"
-                                        : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+                                    ? "text-rose-600 bg-white shadow-[0_1px_3px_rgb(0,0,0,0.1)]"
+                                    : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
                                     }`}
                                 onClick={() => setActiveTab("plans")}
                             >
@@ -297,8 +369,8 @@ export default function Home() {
                             </button>
                             <button
                                 className={`flex-1 py-2 text-sm font-semibold flex items-center justify-center gap-2 rounded-lg transition-all duration-200 ${activeTab === "itinerary"
-                                        ? "text-rose-600 bg-white shadow-[0_1px_3px_rgb(0,0,0,0.1)]"
-                                        : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+                                    ? "text-rose-600 bg-white shadow-[0_1px_3px_rgb(0,0,0,0.1)]"
+                                    : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
                                     }`}
                                 onClick={() => setActiveTab("itinerary")}
                             >
@@ -331,6 +403,8 @@ export default function Home() {
                                 onUpdatePlan={handleUpdatePlan}
                                 onDeletePlan={handleDeletePlan}
                                 onAddPlanToDay={handleAddPlanToDay}
+                                expandedPlanId={expandedPlanId}
+                                setExpandedPlanId={setExpandedPlanId}
                             />
                         ) : (
                             <Itinerary
@@ -353,6 +427,7 @@ export default function Home() {
                         places={places}
                         selectedPlaceId={selectedPlaceId}
                         onSelectPlace={handleSelectPlace}
+                        polylines={polylines}
                     />
                 </div>
             </main>

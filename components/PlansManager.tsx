@@ -20,6 +20,8 @@ interface PlansManagerProps {
   onUpdatePlan: (planId: string, plan: Partial<Plan>) => void;
   onDeletePlan: (planId: string) => void;
   onAddPlanToDay: (planId: string, day: number) => void;
+  expandedPlanId: string | null;
+  setExpandedPlanId: (id: string | null) => void;
 }
 
 interface SelectedItem {
@@ -35,12 +37,13 @@ export default function PlansManager({
   onUpdatePlan,
   onDeletePlan,
   onAddPlanToDay,
+  expandedPlanId,
+  setExpandedPlanId,
 }: PlansManagerProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
   const [newPlanName, setNewPlanName] = useState("");
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
-  const [expandedPlanId, setExpandedPlanId] = useState<string | null>(null);
   const [showDaySelector, setShowDaySelector] = useState<string | null>(null);
   const [daySelectorPos, setDaySelectorPos] = useState<{
     top: number;
@@ -201,8 +204,8 @@ export default function PlansManager({
                   <div
                     key={place.id}
                     className={`p-3 rounded-xl border transition-all duration-200 cursor-pointer ${isSelected
-                        ? "bg-rose-50 border-rose-300 shadow-[0_2px_8px_rgb(225,29,72,0.1)]"
-                        : "bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm"
+                      ? "bg-rose-50 border-rose-300 shadow-[0_2px_8px_rgb(225,29,72,0.1)]"
+                      : "bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm"
                       }`}
                     onClick={() => handleTogglePlace(place.id)}
                   >
@@ -335,8 +338,8 @@ export default function PlansManager({
             <div
               key={plan.id}
               className={`bg-white border rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer ${isExpanded
-                  ? "border-rose-200 shadow-[0_8px_30px_rgb(0,0,0,0.06)]"
-                  : "border-slate-100 hover:border-slate-200 hover:shadow-md"
+                ? "border-rose-200 shadow-[0_8px_30px_rgb(0,0,0,0.06)]"
+                : "border-slate-100 hover:border-slate-200 hover:shadow-md"
                 }`}
               onClick={() => setExpandedPlanId(isExpanded ? null : plan.id)}
             >

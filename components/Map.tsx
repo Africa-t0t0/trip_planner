@@ -2,15 +2,66 @@
 
 import { Map as GoogleMap, AdvancedMarker, InfoWindow, useMap } from '@vis.gl/react-google-maps';
 import { Place } from '@/app/models/places';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+
+export interface PolylineData {
+    id: string;
+    path: { lat: number; lng: number }[];
+    color: string;
+}
+
+interface MapPolylineProps {
+    polyline: PolylineData;
+}
+
+function MapPolyline({ polyline }: MapPolylineProps) {
+    const map = useMap();
+    const polylineRef = useRef<google.maps.Polyline | null>(null);
+
+    useEffect(() => {
+        if (!map || typeof google === 'undefined') return;
+
+        // Always create a fresh polyline when map or data changes
+        if (polylineRef.current) {
+            polylineRef.current.setMap(null);
+            polylineRef.current = null;
+        }
+
+        polylineRef.current = new google.maps.Polyline({
+            map,
+            path: polyline.path,
+            strokeColor: polyline.color,
+            strokeOpacity: 0.85,
+            strokeWeight: 4,
+            icons: [
+                {
+                    icon: { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 3 },
+                    offset: '50%',
+                    repeat: '120px'
+                }
+            ]
+        });
+
+        return () => {
+            if (polylineRef.current) {
+                polylineRef.current.setMap(null);
+                polylineRef.current = null;
+            }
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [map, polyline.id, polyline.color, polyline.path]);
+
+    return null;
+}
 
 interface MapProps {
     places: Place[];
     selectedPlaceId?: string | null;
     onSelectPlace: (placeId: string) => void;
+    polylines?: PolylineData[];
 }
 
-export default function Map({ places, selectedPlaceId, onSelectPlace }: MapProps) {
+export default function Map({ places, selectedPlaceId, onSelectPlace, polylines }: MapProps) {
     const [openInfoWindowId, setOpenInfoWindowId] = useState<string | null>(null);
     const map = useMap();
 
@@ -46,6 +97,7 @@ export default function Map({ places, selectedPlaceId, onSelectPlace }: MapProps
             disableDefaultUI={false}
             className="w-full h-full"
         >
+            {polylines?.map(pl => <MapPolyline key={pl.id} polyline={pl} />)}
             {places.map((place) => {
                 const isSelected = selectedPlaceId === place.id;
 
